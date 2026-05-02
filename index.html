@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MBTI Personality Insight Premium</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#0f0f0f;color:#f5e6b3;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}
+.container{max-width:700px;width:100%;background:#181818;border:1px solid #c9a227;border-radius:20px;padding:30px;box-shadow:0 0 20px rgba(201,162,39,.3)}
+h1,h2{text-align:center;color:#ffd76a}.btn{background:#c9a227;color:#111;border:none;padding:15px 25px;border-radius:12px;cursor:pointer;font-weight:bold;width:100%;margin-top:20px}.option{display:block;width:100%;margin:10px 0;padding:14px;border:1px solid #c9a227;background:#111;color:#f5e6b3;border-radius:12px;cursor:pointer}.hidden{display:none}.progress{text-align:right;margin-bottom:15px;color:#ffd76a}input,select{width:100%;padding:12px;border-radius:10px;border:1px solid #c9a227;background:#111;color:#fff;margin:8px 0}
+</style>
+</head>
+<body>
+<div class="container">
+<div id="landing">
+<h1>MBTI Personality Insight</h1>
+<p style="text-align:center">Tes psikologis premium untuk mengenal kepribadian, potensi, gaya belajar, relasi, dan arah karir Anda.</p>
+<button class="btn" onclick="showIdentity()">Mulai Tes Sekarang</button>
+</div>
+<div id="identity" class="hidden">
+<h2>Data Diri</h2>
+<input type="text" id="nama" placeholder="Nama Lengkap">
+<input type="number" id="usia" placeholder="Usia">
+<select id="gender"><option>Laki-laki</option><option>Perempuan</option></select>
+<button class="btn" onclick="startTest()">Lanjut ke Soal</button>
+</div>
+<div id="quiz" class="hidden">
+<div class="progress" id="progress"></div>
+<h2 id="question"></h2>
+<button class="option" onclick="answer(4)">Sangat Setuju</button>
+<button class="option" onclick="answer(3)">Setuju</button>
+<button class="option" onclick="answer(2)">Tidak Setuju</button>
+<button class="option" onclick="answer(1)">Sangat Tidak Setuju</button>
+</div>
+<div id="loading" class="hidden"><h2>Sedang Menganalisis Kepribadian Anda...</h2><p style='text-align:center;color:#fff'>Menyusun profil personal, dimensi psikologis, dan insight premium...</p></div>
+<div id="result" class="hidden"></div>
+</div>
+<script>
+const mbtiResults = {
+ISTJ:{title:'ISTJ — The Inspector',desc:'Pribadi yang terstruktur, realistis, disiplin, dan sangat dapat diandalkan dalam menjalankan tanggung jawab.',strength:'Teliti, konsisten, bertanggung jawab, loyal.',weak:'Cenderung kaku, sulit menerima perubahan mendadak.',career:'Akuntan, auditor, administrasi, analis data.',relation:'Setia namun tidak mudah mengungkapkan emosi.',tips:'Belajar lebih fleksibel terhadap situasi yang tidak selalu sempurna.'},
+ISFJ:{title:'ISFJ — The Defender',desc:'Pribadi yang hangat, setia, tenang, dan selalu berusaha menjaga kenyamanan orang lain.',strength:'Sabar, suportif, dapat dipercaya, perhatian.',weak:'Sulit menolak, memendam perasaan.',career:'Guru, perawat, administrasi, pelayanan sosial.',relation:'Sangat setia dan protektif.',tips:'Belajar menyampaikan kebutuhan diri sendiri.'},
+INFJ:{title:'INFJ — The Advocate',desc:'Pribadi mendalam, intuitif, penuh makna, dan peka terhadap perasaan sekitar.',strength:'Bijaksana, empatik, visioner.',weak:'Overthinking, mudah lelah emosional.',career:'Psikolog, penulis, konselor.',relation:'Tulus namun selektif membuka diri.',tips:'Jangan memikul semua beban emosi sendirian.'},
+INTJ:{title:'INTJ — The Strategist',desc:'Pemikir visioner yang analitis, mandiri, dan selalu fokus pada efisiensi serta strategi jangka panjang.',strength:'Strategis, logis, visioner, mandiri.',weak:'Perfeksionis, terkesan dingin, sulit percaya.',career:'Programmer, peneliti, engineer, planner.',relation:'Selektif tetapi loyal.',tips:'Belajar membuka ruang kolaborasi dengan orang lain.'},
+ISTP:{title:'ISTP — The Craftsman',desc:'Problem solver yang tenang, logis, dan cepat bertindak di situasi nyata.',strength:'Praktis, analitis, mandiri.',weak:'Sulit terbuka, kurang suka aturan.',career:'Teknisi, engineer, mekanik, analis lapangan.',relation:'Peduli lewat tindakan.',tips:'Latih komunikasi emosional.'},
+ISFP:{title:'ISFP — The Artist',desc:'Pribadi lembut, spontan, artistik, dan menghargai kebebasan personal.',strength:'Kreatif, fleksibel, peka.',weak:'Kurang terarah, menghindari konflik.',career:'Desain, seni, kuliner, fashion.',relation:'Hangat tapi butuh ruang.',tips:'Bangun tujuan jangka panjang.'},
+INFP:{title:'INFP — The Mediator',desc:'Pribadi idealis, sensitif, dan memiliki dunia batin yang kaya.',strength:'Empatik, kreatif, tulus.',weak:'Mudah bimbang, sensitif kritik.',career:'Penulis, konselor, desainer.',relation:'Hangat namun hati-hati.',tips:'Ubah idealisme menjadi tindakan nyata.'},
+INTP:{title:'INTP — The Thinker',desc:'Pemikir mendalam yang menikmati analisis, konsep, dan logika kompleks.',strength:'Logis, konseptual, objektif.',weak:'Overthinking, menunda aksi.',career:'Programmer, peneliti, ilmuwan.',relation:'Selektif dan tidak suka basa-basi.',tips:'Seimbangkan pemikiran dengan eksekusi.'},
+ESTP:{title:'ESTP — The Dynamo',desc:'Pribadi energik, spontan, berani, dan suka tantangan.',strength:'Gesit, persuasif, action oriented.',weak:'Impulsif, cepat bosan.',career:'Sales, entrepreneur, event.',relation:'Seru dan ekspresif.',tips:'Belajar menimbang risiko.'},
+ESFP:{title:'ESFP — The Entertainer',desc:'Pribadi ceria, ekspresif, dan suka membawa suasana hidup.',strength:'Ramah, optimis, menghibur.',weak:'Kurang konsisten, mudah terdistraksi.',career:'MC, hospitality, content creator.',relation:'Penuh warna dan perhatian.',tips:'Bangun kedisiplinan.'},
+ENFP:{title:'ENFP — The Campaigner',desc:'Pribadi kreatif, antusias, penuh ide, dan mudah membangun hubungan dengan banyak orang.',strength:'Komunikatif, inspiratif, adaptif, penuh energi.',weak:'Mudah bosan, kurang konsisten, impulsif.',career:'Content creator, marketing, guru, entrepreneur.',relation:'Hangat dan ekspresif tetapi mood mudah berubah.',tips:'Latih konsistensi untuk menuntaskan ide sampai selesai.'},
+ENTP:{title:'ENTP — The Debater',desc:'Pribadi penuh ide, cepat berpikir, dan suka tantangan intelektual.',strength:'Inovatif, cerdas, visioner.',weak:'Lompat ide, terlalu kritis.',career:'Strategist, entrepreneur, kreator.',relation:'Komunikatif dan suka debat.',tips:'Tuntaskan satu ide sebelum pindah.'},
+ESTJ:{title:'ESTJ — The Executive',desc:'Pribadi tegas, sistematis, dan fokus pada hasil nyata.',strength:'Disiplin, organisatoris, bertanggung jawab.',weak:'Kaku, dominan.',career:'Manajer, supervisor, pemimpin proyek.',relation:'Melindungi namun mengatur.',tips:'Belajar mendengar sudut pandang lain.'},
+ESFJ:{title:'ESFJ — The Caregiver',desc:'Pribadi hangat, perhatian, dan sangat peduli pada keharmonisan hubungan sosial.',strength:'Empatik, kooperatif, ramah, suportif.',weak:'Sulit menolak, mudah memikirkan penilaian orang.',career:'Guru, HRD, konselor, customer service.',relation:'Penuh perhatian dan butuh apresiasi.',tips:'Belajar menempatkan batas agar tidak kelelahan emosional.'},
+ENFJ:{title:'ENFJ — The Protagonist',desc:'Pribadi karismatik, suportif, dan pandai menggerakkan orang lain.',strength:'Inspiratif, komunikatif, peduli.',weak:'Sulit menolak, mudah kecewa.',career:'Trainer, guru, public speaker.',relation:'Hangat dan penuh perhatian.',tips:'Jaga energi diri sendiri.'},
+ENTJ:{title:'ENTJ — The Commander',desc:'Pemimpin alami yang ambisius, strategis, dan berorientasi target.',strength:'Tegas, efisien, visioner.',weak:'Kurang sabar, dominan.',career:'CEO, manajer, business strategist.',relation:'Protektif tapi mengatur.',tips:'Latih empati dalam kepemimpinan.'},
+ISTJ:{title:'ISTJ — The Inspector',desc:'Pribadi yang terstruktur, realistis, disiplin, dan sangat dapat diandalkan dalam menjalankan tanggung jawab.',strength:'Teliti, konsisten, bertanggung jawab, loyal.',weak:'Cenderung kaku, sulit menerima perubahan mendadak.',career:'Akuntan, auditor, administrasi, analis data.',relation:'Setia namun tidak mudah mengungkapkan emosi.',tips:'Belajar lebih fleksibel terhadap situasi yang tidak selalu sempurna.'},
+ENFP:{title:'ENFP — The Campaigner',desc:'Pribadi kreatif, antusias, penuh ide, dan mudah membangun hubungan dengan banyak orang.',strength:'Komunikatif, inspiratif, adaptif, penuh energi.',weak:'Mudah bosan, kurang konsisten, impulsif.',career:'Content creator, marketing, guru, entrepreneur.',relation:'Hangat dan ekspresif tetapi mood mudah berubah.',tips:'Latih konsistensi untuk menuntaskan ide sampai selesai.'},
+INTJ:{title:'INTJ — The Strategist',desc:'Pemikir visioner yang analitis, mandiri, dan selalu fokus pada efisiensi serta strategi jangka panjang.',strength:'Strategis, logis, visioner, mandiri.',weak:'Perfeksionis, terkesan dingin, sulit percaya.',career:'Programmer, peneliti, engineer, planner.',relation:'Selektif tetapi loyal.',tips:'Belajar membuka ruang kolaborasi dengan orang lain.'},
+ESFJ:{title:'ESFJ — The Caregiver',desc:'Pribadi hangat, perhatian, dan sangat peduli pada keharmonisan hubungan sosial.',strength:'Empatik, kooperatif, ramah, suportif.',weak:'Sulit menolak, mudah memikirkan penilaian orang.',career:'Guru, HRD, konselor, customer service.',relation:'Penuh perhatian dan butuh apresiasi.',tips:'Belajar menempatkan batas agar tidak kelelahan emosional.'}
+};
+
+const questions=[
+'Saya merasa lebih hidup ketika terlibat dalam aktivitas bersama banyak orang.','Saya menikmati bertemu dengan orang-orang baru.','Saya cenderung memulai percakapan terlebih dahulu.','Saya lebih nyaman menyimpan cerita sendiri daripada membagikannya.','Kesendirian dalam waktu lama membuat saya cepat bosan.','Saya sering membutuhkan waktu sendiri setelah banyak berinteraksi.','Saya senang terlibat dalam diskusi yang aktif.','Saya merasa lebih tenang ketika tidak banyak berbicara.','Saya mudah menyesuaikan diri di lingkungan sosial baru.','Saya jarang tertarik menjadi pusat perhatian.',
+'Saya lebih percaya pada fakta yang terlihat jelas.','Saya sering memikirkan kemungkinan-kemungkinan yang belum terjadi.','Saya suka instruksi yang rinci dan terstruktur.','Saya tertarik pada ide-ide abstrak.','Saya lebih nyaman mengikuti prosedur yang sudah pasti.','Saya sering menggunakan firasat dalam menilai sesuatu.','Saya terbiasa memperhatikan detail kecil.','Saya lebih menikmati membayangkan masa depan daripada fokus pada saat ini.','Saya lebih suka pengalaman nyata daripada teori.','Saya tertarik pada makna tersembunyi di balik suatu kejadian.',
+'Saya lebih mengutamakan logika saat mengambil keputusan.','Saya sering mempertimbangkan perasaan orang lain sebelum bertindak.','Saya bisa tetap tegas walau keputusan saya tidak menyenangkan.','Saya sulit mengabaikan sisi emosional dalam suatu masalah.','Menurut saya kebenaran lebih penting daripada kenyamanan.','Saya lebih suka menenangkan daripada mengkritik.','Saya menilai sesuatu secara objektif.','Saya mudah tersentuh oleh kondisi orang lain.','Saya lebih fokus mencari solusi daripada sekadar empati.','Saya sering mengikuti kata hati ketika menentukan pilihan.',
+'Saya suka membuat rencana sebelum mulai bekerja.','Saya menikmati keputusan yang spontan.','Saya merasa tenang jika jadwal tersusun rapi.','Saya sering mengerjakan sesuatu mengikuti suasana hati.','Saya terbiasa menyelesaikan tugas sebelum deadline.','Saya tidak masalah dengan perubahan mendadak.','Saya senang target yang jelas.','Saya lebih suka kebebasan daripada aturan yang ketat.','Saya menyiapkan langkah cadangan sebelum bertindak.','Saya sering membiarkan sesuatu berjalan tanpa rencana detail.'
+];
+let current=0; let scores=[];
+function showIdentity(){landing.classList.add('hidden');identity.classList.remove('hidden');}
+function startTest(){identity.classList.add('hidden');quiz.classList.remove('hidden');loadQuestion();}
+function loadQuestion(){document.getElementById('question').innerText=questions[current];document.getElementById('progress').innerText=`${current+1}/40<p style='text-align:center;font-style:italic;color:#ffd76a;margin-top:20px'>"Kenali dirimu, maksimalkan potensimu."</p></div>`;}
+function answer(val){scores.push(val);current++; if(current<questions.length){loadQuestion()} else {quiz.classList.add('hidden');loading.classList.remove('hidden');setTimeout(showResult,3000)}}
+function calcDim(start,end,reverseIndex=[]){let total=0;for(let i=start;i<=end;i++){let v=scores[i]; if(reverseIndex.includes(i)) v=5-v; total+=v;} return total;}
+function showResult(){loading.classList.add('hidden'); let EI=calcDim(0,9,[3,5,7,9]); let SN=calcDim(10,19,[11,13,15,17,19]); let TF=calcDim(20,29,[21,23,25,27,29]); let JP=calcDim(30,39,[31,33,35,37,39]); let type=(EI>25?'E':'I')+(SN>25?'S':'N')+(TF>25?'T':'F')+(JP>25?'J':'P'); document.getElementById('result').classList.remove('hidden'); let data=mbtiResults[type] || {title:type,desc:'Database tipe ini sedang disiapkan.',strength:'-',weak:'-',career:'-',relation:'-',tips:'-'}; document.getElementById('result').innerHTML=`<div style='border:1px solid #c9a227;padding:20px;border-radius:18px;background:#111;'><h1>${data.title}</h1><p style='text-align:center'>Halo ${document.getElementById('nama').value}, berikut hasil analisis kepribadian premium Anda.</p><p><b>Deskripsi Inti:</b> ${data.desc}</p><p><b>Kekuatan:</b> ${data.strength}</p><p><b>Tantangan:</b> ${data.weak}</p><p><b>Karir Cocok:</b> ${data.career}</p><p><b>Relasi Sosial:</b> ${data.relation}</p><p><b>Tips Pengembangan:</b> ${data.tips}</p><p style='text-align:center'>Persentase Dimensi: ${Math.round(EI/40*100)}% • ${Math.round(SN/40*100)}% • ${Math.round(TF/40*100)}% • ${Math.round(JP/40*100)}%</p><a href='https://wa.me/6281234567890' target='_blank'><button class='btn'>Konsultasi Hasil via WhatsApp</button></a>`;}
+</script>
+</body>
+</html>
